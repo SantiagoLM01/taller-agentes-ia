@@ -1,0 +1,26 @@
+# --- Secretos: NUNCA subir el .env con claves reales ---
+.env
+*.env
+!.env.example
+
+# Entorno virtual de Python
+.venv/
+venv/
+env/
+
+# Cachés de Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Índices/artefactos generados por el taller
+*.faiss
+faiss_index/
+*.pkl
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
