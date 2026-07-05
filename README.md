@@ -52,6 +52,12 @@ taller-agentes-ia/
 │   ├── 04_rag.ipynb
 │   └── 05_graphrag.ipynb
 ├── soluciones/           # Versiones completas de cada notebook
+├── cli/                  # Mismos pasos, pero para la terminal (interactivos)
+│   ├── 01_agente.py
+│   ├── 02_mcp.py
+│   ├── 03_langgraph.py
+│   ├── 04_rag.py
+│   └── 05_graphrag.py
 ├── mcp_server/
 │   ├── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
 │   └── rag_server.py     # Servidor MCP con la tool de RAG (buscar_documentos)
@@ -87,6 +93,32 @@ taller-agentes-ia/
 3. Selecciona el kernel de Python del entorno virtual (`.venv`).
 4. Ejecuta las celdas de arriba hacia abajo, completando los `# TODO`.
 5. Llega al **✅ Checkpoint** de cada notebook antes de pasar al siguiente.
+
+---
+
+## 💻 Correr cada paso desde la terminal (CLI)
+
+Además de los notebooks, en `cli/` tienes un script por cada tema. Cada uno funciona
+de dos formas:
+
+```powershell
+# Modo chat interactivo: escribes mensajes y el agente responde ('salir' para terminar)
+python cli/01_agente.py
+
+# Modo pregunta única: pasas la pregunta como argumento y obtienes la respuesta
+python cli/01_agente.py "¿Cuántos caracteres tiene 'inteligencia'? Usa la herramienta."
+```
+
+| Script | Qué hace | Ejemplo de pregunta |
+|---|---|---|
+| `cli/01_agente.py` | Agente (LLM + tool) | *"¿Cuántos caracteres tiene 'LangChain'?"* |
+| `cli/02_mcp.py` | Agente con tools vía MCP | *"¿Cuánto es 15*(3+2)? ¿Qué clima hace en Madrid?"* |
+| `cli/03_langgraph.py` | Flujo con LangGraph (clasifica y enruta) | *"¿Qué es un embedding?"* |
+| `cli/04_rag.py` | RAG agéntico (agente + MCP + tool) | *"¿Quién fundó Miravalle y en qué año?"* |
+| `cli/05_graphrag.py` | GraphRAG (grafo de conocimiento) | *"Miravalle"* (una entidad) |
+
+> Los scripts `02` y `04` abren **una sola sesión MCP** que se mantiene viva durante
+> todo el chat, así cada mensaje responde rápido.
 
 ---
 
