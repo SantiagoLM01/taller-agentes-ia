@@ -3,8 +3,9 @@ visor.py — Visor interactivo EN VIVO del vector store (RAG) y del grafo (Graph
 
 Lanza una app local en el navegador con dos pestañas:
   1. Vector Store (RAG): escribe una consulta y ve, en tiempo real, los embeddings
-     de los fragmentos proyectados en 3D; se resaltan tu consulta y los k más
-     cercanos (los que el RAG recuperaría).
+     del MISMO índice FAISS que usa el agente (rag_server.py), proyectados en 3D;
+     la búsqueda la hace el propio FAISS (index.search) y se resaltan tu consulta
+     y los k fragmentos recuperados, con sus distancias L2 reales.
   2. Grafo (GraphRAG): el grafo de conocimiento de la historia; escribe una
      entidad y se resaltan sus relaciones, con una explicación del LLM.
 
@@ -27,6 +28,7 @@ import gradio as gr
 import networkx as nx
 import numpy as np
 import plotly.graph_objects as go
+from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel, Field
 from sklearn.decomposition import PCA
@@ -38,12 +40,31 @@ from config import get_chat_model, get_embeddings
 # ----------------------------------------------------------------------------
 print("Cargando documento y modelos...", flush=True)
 _TEXTO = open(os.path.join(REPO, "data", "historia_zelanor.md"), encoding="utf-8").read()
-_CHUNKS = [d.page_content for d in
-           RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50).create_documents([_TEXTO])]
 
 _emb = get_embeddings()
-print(f"Calculando embeddings de {len(_CHUNKS)} fragmentos...", flush=True)
-_CHUNK_VECS = np.array(_emb.embed_documents(_CHUNKS))  # (n_chunks, dim)
+
+# Usamos EXACTAMENTE el mismo índice FAISS que el agente (rag_server.py):
+# misma carpeta de caché, mismo troceado, mismos embeddings. Si ya existe,
+# lo cargamos de disco; si no, lo construimos con la misma receta y lo
+# guardamos, de modo que el visor y el agente comparten el mismo store.
+_CACHE_DIR = os.path.join(REPO, "mcp_server", "_faiss_cache")
+if os.path.isdir(_CACHE_DIR):
+    print("Cargando indice FAISS desde cache (el mismo del agente)...", flush=True)
+    _VS = FAISS.load_local(_CACHE_DIR, _emb, allow_dangerous_deserialization=True)
+else:
+    print("Construyendo indice FAISS (primera vez) y guardando en cache...", flush=True)
+    _docs = RecursiveCharacterTextSplitter(
+        chunk_size=400, chunk_overlap=50
+    ).create_documents([_TEXTO])
+    _VS = FAISS.from_documents(_docs, _emb)
+    _VS.save_local(_CACHE_DIR)
+
+# Recuperamos los vectores YA GUARDADOS en el índice FAISS (no los recalculamos)
+# y los textos en el mismo orden que el índice, para poder graficarlos.
+_N = _VS.index.ntotal
+_CHUNK_VECS = _VS.index.reconstruct_n(0, _N)  # (n_chunks, dim), tal cual en FAISS
+_CHUNKS = [_VS.docstore.search(_VS.index_to_docstore_id[i]).page_content for i in range(_N)]
+print(f"Indice FAISS listo: {_N} fragmentos.", flush=True)
 
 
 def _preview(texto: str, n: int = 70) -> str:
@@ -51,20 +72,18 @@ def _preview(texto: str, n: int = 70) -> str:
 
 
 # ----------------------------------------------------------------------------
-# Pestaña 1 · Vector Store (RAG)
+# Pestaña 1 · Vector Store (RAG) — búsqueda REAL sobre el índice FAISS
 # ----------------------------------------------------------------------------
-def _cosine(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    a = a / (np.linalg.norm(a) + 1e-9)
-    b = b / (np.linalg.norm(b, axis=1, keepdims=True) + 1e-9)
-    return b @ a
-
-
 def ver_vector_store(consulta: str, k: int = 3):
     tiene_consulta = bool(consulta and consulta.strip())
     if tiene_consulta:
-        qvec = np.array(_emb.embed_query(consulta))
-        sims = _cosine(qvec, _CHUNK_VECS)
-        top = np.argsort(-sims)[:k]
+        # Embedding de la consulta y BÚSQUEDA REAL en FAISS (index.search):
+        # devuelve las distancias L2 y los índices de los k más cercanos,
+        # exactamente como cuando el agente llama a la herramienta de RAG.
+        qvec = np.array(_emb.embed_query(consulta), dtype="float32").reshape(1, -1)
+        dist_top, idx_top = _VS.index.search(qvec, k)
+        top = idx_top[0]
+        dist_top = dist_top[0]
         puntos = np.vstack([_CHUNK_VECS, qvec])
     else:
         top = np.array([], dtype=int)
@@ -100,16 +119,17 @@ def ver_vector_store(consulta: str, k: int = 3):
             name="consulta",
         ))
     fig.update_layout(
-        title="Embeddings de los fragmentos (proyección 3D) · rojo = recuperados",
+        title="Embeddings del índice FAISS (proyección 3D) · rojo = recuperados",
         margin=dict(l=0, r=0, t=40, b=0), height=560, showlegend=True,
     )
 
     if tiene_consulta:
-        md = "### Fragmentos recuperados (top-%d)\n" % k
-        for rank, i in enumerate(top, 1):
-            md += f"\n**{rank}. #{i}** · similitud `{sims[i]:.3f}`\n\n> {_preview(_CHUNKS[i], 200)}…\n"
+        md = "### Fragmentos recuperados por FAISS (top-%d)\n" % k
+        md += "\n_Distancia L2 (euclidiana): **menor = más cercano**, la métrica que usa FAISS._\n"
+        for rank, (i, dist) in enumerate(zip(top, dist_top), 1):
+            md += f"\n**{rank}. #{i}** · distancia L2 `{dist:.3f}`\n\n> {_preview(_CHUNKS[i], 200)}…\n"
     else:
-        md = "Escribe una consulta arriba para resaltar los fragmentos más cercanos."
+        md = "Escribe una consulta arriba para buscar en el índice FAISS y resaltar los fragmentos recuperados."
     return fig, md
 
 
