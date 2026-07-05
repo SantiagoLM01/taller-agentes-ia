@@ -57,7 +57,8 @@ taller-agentes-ia/
 │   ├── 02_mcp.py
 │   ├── 03_langgraph.py
 │   ├── 04_rag.py
-│   └── 05_graphrag.py
+│   ├── 05_graphrag.py
+│   └── visor.py          # Visor interactivo (vector store + grafo en tiempo real)
 ├── mcp_server/
 │   ├── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
 │   └── rag_server.py     # Servidor MCP con la tool de RAG (buscar_documentos)
@@ -119,6 +120,28 @@ python cli/01_agente.py "¿Cuántos caracteres tiene 'inteligencia'? Usa la herr
 
 > Los scripts `02` y `04` abren **una sola sesión MCP** que se mantiene viva durante
 > todo el chat, así cada mensaje responde rápido.
+
+---
+
+## 🔎 Visor interactivo (vector store + grafo en tiempo real)
+
+Para *ver* qué pasa por dentro de RAG y GraphRAG hay una pequeña app web:
+
+```powershell
+python cli/visor.py
+```
+
+Abre **http://127.0.0.1:7860** en el navegador. Tiene dos pestañas:
+
+- **Vector Store (RAG):** proyecta en 3D los *embeddings* (vectores numéricos) de los
+  fragmentos de la historia. Escribes una consulta y ves qué fragmentos quedan más
+  cerca (los que RAG recuperaría) resaltados junto al punto de tu consulta.
+- **Grafo (GraphRAG):** muestra el grafo de conocimiento (entidades y relaciones)
+  extraído de la historia. Eliges una entidad y resalta su vecindario, con una
+  explicación generada por el modelo.
+
+> Requiere las dependencias de visualización (`gradio`, `plotly`, `scikit-learn`),
+> ya incluidas en `requirements.txt`.
 
 ---
 
