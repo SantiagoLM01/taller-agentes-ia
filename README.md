@@ -58,6 +58,7 @@ taller-agentes-ia/
 │   ├── 03_langgraph.py
 │   ├── 04_rag.py
 │   ├── 05_graphrag.py
+│   ├── preparar.py       # Genera por adelantado las cachés (FAISS + grafo)
 │   └── visor.py          # Visor interactivo (vector store + grafo en tiempo real)
 ├── mcp_server/
 │   ├── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
@@ -142,6 +143,20 @@ Abre **http://127.0.0.1:7860** en el navegador. Tiene dos pestañas:
 
 > Requiere las dependencias de visualización (`gradio`, `plotly`, `scikit-learn`),
 > ya incluidas en `requirements.txt`.
+
+### Preparar las cachés antes del taller (opcional pero recomendado)
+
+El índice **FAISS** (vector store de RAG) y el **grafo** (GraphRAG) se generan la
+primera vez que se usan y quedan cacheados en `mcp_server/_faiss_cache/`. Para que
+en vivo todo cargue al instante, puedes generarlos por adelantado:
+
+```powershell
+python cli/preparar.py           # crea lo que falte
+python cli/preparar.py --force   # borra las cachés y las regenera desde cero
+```
+
+Después, tanto `cli/04_rag.py` (el agente) como `cli/visor.py` cargan directamente
+desde disco, sin esperar a construir el índice ni a llamar al modelo.
 
 ---
 
