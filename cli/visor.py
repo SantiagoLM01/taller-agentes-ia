@@ -15,6 +15,7 @@ Uso:
 
 Requiere: gradio, plotly, scikit-learn (ya en requirements.txt).
 """
+import json
 import os
 import sys
 
@@ -146,16 +147,38 @@ class Grafo(BaseModel):
     relaciones: List[Relacion]
 
 
-print("Extrayendo el grafo de conocimiento (LLM)...", flush=True)
+print("Cargando el grafo de conocimiento...", flush=True)
 _llm = get_chat_model(max_tokens=4096)
-_res = _llm.with_structured_output(Grafo).invoke(
-    "Extrae las relaciones clave entre entidades (personajes, lugares, "
-    "organizaciones y objetos) de la siguiente historia. Sé conciso, "
-    f"máximo 12 relaciones.\n\n{_TEXTO}"
-)
+
+# El grafo se extrae con el LLM (GraphRAG). Como esa extracción no es
+# determinista y cuesta una llamada, lo cacheamos en disco como JSON: la
+# primera vez se extrae y se guarda; después se reutiliza tal cual, para que
+# el grafo sea REPRODUCIBLE entre ejecuciones (mismas entidades y relaciones).
+_GRAPH_CACHE = os.path.join(REPO, "mcp_server", "_faiss_cache", "grafo.json")
+
+
+def _extraer_relaciones() -> List[dict]:
+    if os.path.isfile(_GRAPH_CACHE):
+        print("  -> grafo cargado desde cache (grafo.json)", flush=True)
+        with open(_GRAPH_CACHE, encoding="utf-8") as fh:
+            return json.load(fh)
+    print("  -> extrayendo grafo con el LLM (primera vez)...", flush=True)
+    res = _llm.with_structured_output(Grafo).invoke(
+        "Extrae las relaciones clave entre entidades (personajes, lugares, "
+        "organizaciones y objetos) de la siguiente historia. Sé conciso, "
+        f"máximo 12 relaciones.\n\n{_TEXTO}"
+    )
+    rels = [r.model_dump() for r in res.relaciones]
+    os.makedirs(os.path.dirname(_GRAPH_CACHE), exist_ok=True)
+    with open(_GRAPH_CACHE, "w", encoding="utf-8") as fh:
+        json.dump(rels, fh, ensure_ascii=False, indent=2)
+    print(f"  -> grafo guardado en cache ({len(rels)} relaciones)", flush=True)
+    return rels
+
+
 _G = nx.DiGraph()
-for r in _res.relaciones:
-    _G.add_edge(r.origen, r.destino, rel=r.relacion)
+for r in _extraer_relaciones():
+    _G.add_edge(r["origen"], r["destino"], rel=r["relacion"])
 _POS = nx.spring_layout(_G, seed=42, k=0.9)  # layout fijo para estabilidad visual
 
 
