@@ -8,6 +8,9 @@ Expone 2 herramientas sencillas que el agente podrá usar:
 Se ejecuta por "stdio": no necesitas abrir puertos ni levantar un servidor web.
 El notebook 02 lo lanza automáticamente como un subproceso.
 
+(El servidor con la herramienta de RAG del notebook 04 está aparte, en
+`mcp_server/rag_server.py`, porque carga librerías más pesadas.)
+
 Para probarlo a mano:
     python mcp_server/server.py
 (quedará esperando mensajes por la entrada estándar; ciérralo con Ctrl+C)

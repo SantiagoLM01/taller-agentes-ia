@@ -17,6 +17,7 @@ __pycache__/
 # Índices/artefactos generados por el taller
 *.faiss
 faiss_index/
+_faiss_cache/
 *.pkl
 
 # Sistema operativo / editor

@@ -12,6 +12,12 @@ Comprueba:
 import sys
 import importlib
 
+# En Windows la consola usa cp1252 y no puede imprimir emojis: forzamos UTF-8.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 OK = "✅"
 FAIL = "❌"
 WARN = "⚠️ "
@@ -49,9 +55,9 @@ def check_env():
     load_dotenv()
     faltan = []
     for var in [
-        "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY",
-        "AZURE_OPENAI_API_VERSION", "AZURE_OPENAI_CHAT_DEPLOYMENT",
-        "AZURE_OPENAI_EMBEDDING_DEPLOYMENT",
+        "AZURE_API_KEY", "AZURE_CHAT_ENDPOINT", "AZURE_CHAT_MODEL",
+        "AZURE_CHAT_API_VERSION", "AZURE_EMBEDDING_ENDPOINT",
+        "AZURE_EMBEDDING_DEPLOYMENT", "AZURE_EMBEDDING_API_VERSION",
     ]:
         val = os.getenv(var)
         if not val or val.startswith("pega-aqui") or "TU-RECURSO" in (val or ""):
@@ -64,15 +70,23 @@ def check_env():
 
 
 def check_azure():
+    ok = True
     try:
         from config import get_chat_model
         llm = get_chat_model()
         r = llm.invoke("Responde solo con la palabra: listo")
-        print(f"{OK} Azure OpenAI responde: {r.content.strip()!r}")
-        return True
+        print(f"{OK} Chat (LLM) responde: {r.content.strip()!r}")
     except Exception as e:
-        print(f"{WARN}No se pudo contactar a Azure OpenAI: {e}")
-        return False
+        print(f"{WARN}No se pudo contactar al modelo de chat: {e}")
+        ok = False
+    try:
+        from config import get_embeddings
+        v = get_embeddings().embed_query("hola")
+        print(f"{OK} Embeddings responde: vector de dimensión {len(v)}")
+    except Exception as e:
+        print(f"{WARN}No se pudo contactar al modelo de embeddings: {e}")
+        ok = False
+    return ok
 
 
 if __name__ == "__main__":

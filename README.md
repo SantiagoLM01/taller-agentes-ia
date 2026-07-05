@@ -53,9 +53,10 @@ taller-agentes-ia/
 │   └── 05_graphrag.ipynb
 ├── soluciones/           # Versiones completas de cada notebook
 ├── mcp_server/
-│   └── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
+│   ├── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
+│   └── rag_server.py     # Servidor MCP con la tool de RAG (buscar_documentos)
 ├── data/
-│   └── agentes_ia.md     # Documento usado por RAG y GraphRAG
+│   └── historia_zelanor.md   # Historia ficticia usada por RAG y GraphRAG
 ├── config.py             # Crea el LLM y los embeddings de Azure OpenAI
 ├── setup_check.py        # Verificador del entorno
 ├── requirements.txt
