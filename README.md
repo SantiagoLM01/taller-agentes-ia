@@ -4,8 +4,9 @@ Taller práctico de 2 horas para construir agentes de IA paso a paso, cubriendo:
 
 **LLM → Agentes (LangChain) → Tools (MCP) → LangGraph → RAG → GraphRAG**
 
-Todo el código está en **notebooks** para VS Code. Cada notebook tiene huecos `# TODO`
-que completas en vivo, y en `soluciones/` está la versión completa por si te atoras.
+Todo el código está en **notebooks** para VS Code, **completos y listos para ejecutar**.
+La lógica común (RAG y grafo) vive en el módulo compartido `taller_core.py`, que también
+usan los servidores MCP y los scripts de `cli/`.
 
 > **Siglas:** LLM = *Large Language Model* (Modelo de Lenguaje Grande) · MCP = *Model Context Protocol* ·
 > RAG = *Retrieval-Augmented Generation* (Generación Aumentada por Recuperación).
@@ -45,13 +46,13 @@ Si `setup_check.py` muestra ✅ en todo, ¡estás lista para el taller!
 
 ```
 taller-agentes-ia/
-├── notebooks/            # Notebooks del taller (con # TODO para completar)
+├── notebooks/            # Notebooks del taller (completos y ejecutables)
 │   ├── 01_llm_y_agente.ipynb
 │   ├── 02_tools_mcp.ipynb
 │   ├── 03_langgraph.ipynb
 │   ├── 04_rag.ipynb
 │   └── 05_graphrag.ipynb
-├── soluciones/           # Versiones completas de cada notebook
+├── soluciones/           # Copia de los notebooks (misma versión completa)
 ├── cli/                  # Mismos pasos, pero para la terminal (interactivos)
 │   ├── 01_agente.py
 │   ├── 02_mcp.py
@@ -66,6 +67,7 @@ taller-agentes-ia/
 ├── data/
 │   └── historia_zelanor.md   # Historia ficticia usada por RAG y GraphRAG
 ├── config.py             # Crea el LLM y los embeddings de Azure OpenAI
+├── taller_core.py        # Núcleo compartido: receta de RAG (FAISS) + grafo (GraphRAG)
 ├── setup_check.py        # Verificador del entorno
 ├── requirements.txt
 └── .env.example
@@ -84,7 +86,7 @@ taller-agentes-ia/
 | 1:35–1:55 | GraphRAG | `05_graphrag.ipynb` |
 | 1:55–2:00 | Cierre | — |
 
-**Ciclo de cada bloque:** demo corta → completas los `# TODO` → checkpoint rápido.
+**Ciclo de cada bloque:** demo corta → ejecutas y experimentas → checkpoint rápido.
 
 ---
 
@@ -93,7 +95,7 @@ taller-agentes-ia/
 1. Abre la carpeta en VS Code.
 2. Abre el notebook del bloque actual.
 3. Selecciona el kernel de Python del entorno virtual (`.venv`).
-4. Ejecuta las celdas de arriba hacia abajo, completando los `# TODO`.
+4. Ejecuta las celdas de arriba hacia abajo y experimenta cambiando las preguntas.
 5. Llega al **✅ Checkpoint** de cada notebook antes de pasar al siguiente.
 
 ---

@@ -16,43 +16,15 @@ Uso:
 """
 import os
 import sys
-from typing import List
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
-import networkx as nx
-from pydantic import BaseModel, Field
-
+import taller_core
 from config import get_chat_model
 
 llm = get_chat_model(max_tokens=4096)
-
-
-class Relacion(BaseModel):
-    origen: str = Field(description="Entidad de origen")
-    relacion: str = Field(description="Relación entre las entidades")
-    destino: str = Field(description="Entidad de destino")
-
-
-class Grafo(BaseModel):
-    relaciones: List[Relacion]
-
-
-def construir_grafo():
-    """Extrae relaciones del documento y arma el grafo dirigido."""
-    texto = open(os.path.join(REPO, "data", "historia_zelanor.md"), encoding="utf-8").read()
-    extractor = llm.with_structured_output(Grafo)
-    resultado = extractor.invoke(
-        "Extrae las relaciones clave entre entidades (personajes, lugares, "
-        "organizaciones y objetos) de la siguiente historia. Sé conciso, "
-        f"máximo 12 relaciones.\n\n{texto}"
-    )
-    G = nx.DiGraph()
-    for r in resultado.relaciones:
-        G.add_edge(r.origen, r.destino, rel=r.relacion)
-    return G
 
 
 def contexto_grafo(G, entidad: str) -> str:
@@ -74,8 +46,8 @@ def consultar(G, entidad: str) -> str:
 
 
 def main():
-    print("Construyendo el grafo de conocimiento... (unos segundos)")
-    G = construir_grafo()
+    print("Cargando el grafo de conocimiento... (unos segundos la primera vez)")
+    G = taller_core.construir_grafo()
     print(f"Grafo listo: {G.number_of_nodes()} entidades, {G.number_of_edges()} relaciones.\n")
 
     if len(sys.argv) > 1:

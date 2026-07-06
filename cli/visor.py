@@ -15,7 +15,6 @@ Uso:
 
 Requiere: gradio, plotly, scikit-learn (ya en requirements.txt).
 """
-import json
 import os
 import sys
 
@@ -23,42 +22,28 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
-from typing import List
 
 import gradio as gr
 import networkx as nx
 import numpy as np
 import plotly.graph_objects as go
-from langchain_community.vectorstores import FAISS
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from pydantic import BaseModel, Field
 from sklearn.decomposition import PCA
 
+import taller_core
 from config import get_chat_model, get_embeddings
 
 # ----------------------------------------------------------------------------
 # Carga de datos y modelos (una sola vez, al arrancar)
 # ----------------------------------------------------------------------------
 print("Cargando documento y modelos...", flush=True)
-_TEXTO = open(os.path.join(REPO, "data", "historia_zelanor.md"), encoding="utf-8").read()
-
+_TEXTO = taller_core.cargar_texto()
 _emb = get_embeddings()
 
-# Usamos EXACTAMENTE el mismo índice FAISS que el agente (rag_server.py):
-# misma carpeta de caché, mismo troceado, mismos embeddings. Si ya existe,
-# lo cargamos de disco; si no, lo construimos con la misma receta y lo
-# guardamos, de modo que el visor y el agente comparten el mismo store.
-_CACHE_DIR = os.path.join(REPO, "mcp_server", "_faiss_cache")
-if os.path.isdir(_CACHE_DIR):
-    print("Cargando indice FAISS desde cache (el mismo del agente)...", flush=True)
-    _VS = FAISS.load_local(_CACHE_DIR, _emb, allow_dangerous_deserialization=True)
-else:
-    print("Construyendo indice FAISS (primera vez) y guardando en cache...", flush=True)
-    _docs = RecursiveCharacterTextSplitter(
-        chunk_size=400, chunk_overlap=50
-    ).create_documents([_TEXTO])
-    _VS = FAISS.from_documents(_docs, _emb)
-    _VS.save_local(_CACHE_DIR)
+# Usamos EXACTAMENTE el mismo índice FAISS que el agente (rag_server.py): la
+# receta y la caché viven en taller_core, así el visor y el agente comparten
+# el mismo store.
+print("Cargando indice FAISS (compartido con el agente)...", flush=True)
+_VS = taller_core.obtener_vectorstore()
 
 # Recuperamos los vectores YA GUARDADOS en el índice FAISS (no los recalculamos)
 # y los textos en el mismo orden que el índice, para poder graficarlos.
@@ -137,48 +122,11 @@ def ver_vector_store(consulta: str, k: int = 3):
 # ----------------------------------------------------------------------------
 # Pestaña 2 · Grafo de conocimiento (GraphRAG)
 # ----------------------------------------------------------------------------
-class Relacion(BaseModel):
-    origen: str = Field(description="Entidad de origen")
-    relacion: str = Field(description="Relación entre las entidades")
-    destino: str = Field(description="Entidad de destino")
-
-
-class Grafo(BaseModel):
-    relaciones: List[Relacion]
-
-
+# El grafo (extracción con el LLM + caché en grafo.json) vive en taller_core,
+# compartido con cli/05_graphrag.py y preparar.py. Aquí solo lo cargamos.
 print("Cargando el grafo de conocimiento...", flush=True)
 _llm = get_chat_model(max_tokens=4096)
-
-# El grafo se extrae con el LLM (GraphRAG). Como esa extracción no es
-# determinista y cuesta una llamada, lo cacheamos en disco como JSON: la
-# primera vez se extrae y se guarda; después se reutiliza tal cual, para que
-# el grafo sea REPRODUCIBLE entre ejecuciones (mismas entidades y relaciones).
-_GRAPH_CACHE = os.path.join(REPO, "mcp_server", "_faiss_cache", "grafo.json")
-
-
-def _extraer_relaciones() -> List[dict]:
-    if os.path.isfile(_GRAPH_CACHE):
-        print("  -> grafo cargado desde cache (grafo.json)", flush=True)
-        with open(_GRAPH_CACHE, encoding="utf-8") as fh:
-            return json.load(fh)
-    print("  -> extrayendo grafo con el LLM (primera vez)...", flush=True)
-    res = _llm.with_structured_output(Grafo).invoke(
-        "Extrae las relaciones clave entre entidades (personajes, lugares, "
-        "organizaciones y objetos) de la siguiente historia. Sé conciso, "
-        f"máximo 12 relaciones.\n\n{_TEXTO}"
-    )
-    rels = [r.model_dump() for r in res.relaciones]
-    os.makedirs(os.path.dirname(_GRAPH_CACHE), exist_ok=True)
-    with open(_GRAPH_CACHE, "w", encoding="utf-8") as fh:
-        json.dump(rels, fh, ensure_ascii=False, indent=2)
-    print(f"  -> grafo guardado en cache ({len(rels)} relaciones)", flush=True)
-    return rels
-
-
-_G = nx.DiGraph()
-for r in _extraer_relaciones():
-    _G.add_edge(r["origen"], r["destino"], rel=r["relacion"])
+_G = taller_core.construir_grafo()
 _POS = nx.spring_layout(_G, seed=42, k=0.9)  # layout fijo para estabilidad visual
 
 
