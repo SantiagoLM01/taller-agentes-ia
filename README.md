@@ -52,7 +52,6 @@ taller-agentes-ia/
 │   ├── 03_langgraph.ipynb
 │   ├── 04_rag.ipynb
 │   └── 05_graphrag.ipynb
-├── soluciones/           # Copia de los notebooks (misma versión completa)
 ├── cli/                  # Mismos pasos, pero para la terminal (interactivos)
 │   ├── 01_agente.py
 │   ├── 02_mcp.py
