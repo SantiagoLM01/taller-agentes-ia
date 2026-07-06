@@ -27,6 +27,8 @@ import gradio as gr
 import networkx as nx
 import numpy as np
 import plotly.graph_objects as go
+from langchain.agents import create_agent
+from langchain_core.tools import tool
 from sklearn.decomposition import PCA
 
 import taller_core
@@ -185,12 +187,82 @@ def ver_grafo(entidad: str):
 
 
 # ----------------------------------------------------------------------------
+# Pestaña 3 · Agente RAG en vivo (pregunta → recuperación → respuesta)
+# ----------------------------------------------------------------------------
+# Un agente real (LLM + tool) que, para responder, llama a `buscar_documentos`.
+# La tool usa el MISMO retriever FAISS de taller_core (el mismo que expone el
+# servidor MCP) y, de paso, guarda qué se recuperó para poder resaltarlo.
+_ULTIMA_RECUPERACION = {"pregunta": "", "docs": []}
+
+
+@tool
+def buscar_documentos(pregunta: str) -> str:
+    """Busca en la base de conocimiento del taller (RAG) y devuelve los
+    fragmentos de texto más relevantes para responder la pregunta."""
+    docs = taller_core.obtener_retriever().invoke(pregunta)
+    _ULTIMA_RECUPERACION["pregunta"] = pregunta
+    _ULTIMA_RECUPERACION["docs"] = docs
+    if not docs:
+        return "No se encontraron fragmentos relevantes."
+    return "\n\n---\n\n".join(d.page_content for d in docs)
+
+
+_AGENTE = create_agent(
+    get_chat_model(),
+    tools=[buscar_documentos],
+    system_prompt=(
+        "Eres una asistente experta. Antes de responder SIEMPRE usa la herramienta "
+        "'buscar_documentos' para recuperar contexto. Responde usando SOLO esa "
+        "información; si no está en el contexto, di que no lo sabes."
+    ),
+)
+
+
+async def preguntar_al_agente(pregunta: str):
+    if not pregunta or not pregunta.strip():
+        return ver_vector_store("")[0], "Escribe una pregunta para el agente."
+
+    _ULTIMA_RECUPERACION["docs"] = []
+    resultado = await _AGENTE.ainvoke({"messages": [{"role": "user", "content": pregunta}]})
+    respuesta = resultado["messages"][-1].content
+
+    # ¿El agente llamó a la tool de recuperación?
+    uso_tool = any(
+        getattr(m, "tool_calls", None) for m in resultado["messages"]
+    )
+
+    # Reconstruimos el gráfico resaltando lo que FAISS recuperó para la pregunta.
+    fig, _ = ver_vector_store(pregunta)
+
+    docs = _ULTIMA_RECUPERACION["docs"]
+    md = f"### 🧠 Respuesta del agente\n\n{respuesta}\n\n---\n"
+    md += ("✅ El agente **llamó a `buscar_documentos`** (RAG) antes de responder.\n"
+           if uso_tool else
+           "⚠️ El agente respondió **sin** usar la herramienta de recuperación.\n")
+    if docs:
+        md += f"\n### 📚 Fragmentos recuperados por FAISS ({len(docs)})\n"
+        for rank, d in enumerate(docs, 1):
+            md += f"\n**{rank}.** > {_preview(d.page_content, 200)}…\n"
+    return fig, md
+
+
+# ----------------------------------------------------------------------------
 # Interfaz Gradio
 # ----------------------------------------------------------------------------
 def construir_app():
     with gr.Blocks(title="Visor RAG / GraphRAG") as app:
-        gr.Markdown("# 🔎 Visor en vivo · Vector Store (RAG) y Grafo (GraphRAG)\n"
+        gr.Markdown("# 🔎 Visor en vivo · Agente RAG, Vector Store y Grafo (GraphRAG)\n"
                     "Base de conocimiento: la historia ficticia de **Miravalle**.")
+        with gr.Tab("Agente RAG en vivo"):
+            gr.Markdown("Pregúntale al **agente**. Verás su respuesta y, a la izquierda, "
+                        "los fragmentos que **FAISS recuperó** para esa pregunta (en rojo).")
+            qa = gr.Textbox(label="Pregunta al agente",
+                            placeholder="p. ej. ¿Quién fundó Miravalle y en qué año?")
+            with gr.Row():
+                plot_a = gr.Plot(label="Recuperación (embeddings)")
+                info_a = gr.Markdown()
+            qa.submit(preguntar_al_agente, inputs=qa, outputs=[plot_a, info_a])
+            gr.Button("Preguntar").click(preguntar_al_agente, inputs=qa, outputs=[plot_a, info_a])
         with gr.Tab("Vector Store (RAG)"):
             q = gr.Textbox(label="Consulta", placeholder="p. ej. ¿Quién fundó Miravalle?")
             with gr.Row():

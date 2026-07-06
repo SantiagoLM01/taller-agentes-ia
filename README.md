@@ -59,7 +59,7 @@ taller-agentes-ia/
 │   ├── 04_rag.py
 │   ├── 05_graphrag.py
 │   ├── preparar.py       # Genera por adelantado las cachés (FAISS + grafo)
-│   └── visor.py          # Visor interactivo (vector store + grafo en tiempo real)
+│   └── visor.py          # Visor interactivo (agente RAG + vector store + grafo en vivo)
 ├── mcp_server/
 │   ├── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
 │   └── rag_server.py     # Servidor MCP con la tool de RAG (buscar_documentos)
@@ -133,8 +133,12 @@ Para *ver* qué pasa por dentro de RAG y GraphRAG hay una pequeña app web:
 python cli/visor.py
 ```
 
-Abre **http://127.0.0.1:7860** en el navegador. Tiene dos pestañas:
+Abre **http://127.0.0.1:7860** en el navegador. Tiene tres pestañas:
 
+- **Agente RAG en vivo:** le haces una pregunta a un **agente** real (LLM + tool).
+  Para responder, el agente llama a la herramienta `buscar_documentos`, que usa el
+  mismo retriever **FAISS** que expone el servidor MCP. Ves su respuesta y, a la
+  izquierda, los fragmentos que FAISS recuperó para esa pregunta (resaltados en rojo).
 - **Vector Store (RAG):** proyecta en 3D los *embeddings* (vectores numéricos) de los
   fragmentos de la historia. Escribes una consulta y ves qué fragmentos quedan más
   cerca (los que RAG recuperaría) resaltados junto al punto de tu consulta.
