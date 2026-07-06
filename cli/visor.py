@@ -132,16 +132,7 @@ _G = taller_core.construir_grafo()
 _POS = nx.spring_layout(_G, seed=42, k=0.9)  # layout fijo para estabilidad visual
 
 
-def ver_grafo(entidad: str):
-    activa = entidad.strip().lower() if entidad else ""
-    resaltados = set()
-    if activa:
-        for n in _G.nodes():
-            if activa in n.lower():
-                resaltados.add(n)
-                resaltados.update(_G.successors(n))
-                resaltados.update(_G.predecessors(n))
-
+def _construir_figura_grafo(resaltados: set):
     edge_x, edge_y, edge_hi_x, edge_hi_y = [], [], [], []
     etiquetas_x, etiquetas_y, etiquetas = [], [], []
     for o, d, data in _G.edges(data=True):
@@ -172,8 +163,27 @@ def ver_grafo(entidad: str):
     fig.update_layout(title="Grafo de conocimiento (arrastra, haz zoom) · rojo = entidad y sus relaciones",
                       margin=dict(l=0, r=0, t=40, b=0), height=560,
                       xaxis=dict(visible=False), yaxis=dict(visible=False), showlegend=False)
+    return fig
 
-    if activa and resaltados:
+
+def _entidades_que_coinciden(texto: str) -> set:
+    """Nodos del grafo cuyo nombre aparece mencionado en el texto (y su vecindario)."""
+    activa = texto.strip().lower() if texto else ""
+    resaltados = set()
+    if activa:
+        for n in _G.nodes():
+            if n.lower() in activa or activa in n.lower():
+                resaltados.add(n)
+                resaltados.update(_G.successors(n))
+                resaltados.update(_G.predecessors(n))
+    return resaltados
+
+
+def ver_grafo(entidad: str):
+    resaltados = _entidades_que_coinciden(entidad)
+    fig = _construir_figura_grafo(resaltados)
+
+    if entidad and entidad.strip() and resaltados:
         contexto = "\n".join(f"{o} --{data['rel']}--> {d}" for o, d, data in _G.edges(data=True)
                              if o in resaltados and d in resaltados)
         explicacion = _llm.invoke(
@@ -218,10 +228,64 @@ _AGENTE = create_agent(
 )
 
 
-async def preguntar_al_agente(pregunta: str):
-    if not pregunta or not pregunta.strip():
-        return ver_vector_store("")[0], "Escribe una pregunta para el agente."
+# --- Modo GraphRAG: agente independiente con SU PROPIA tool (grafo) -----------
+# No mezclamos tools en un mismo agente: este agente recupera RELACIONES del
+# grafo de conocimiento (GraphRAG), no fragmentos de texto (RAG).
+_ULTIMA_GRAFO = {"pregunta": "", "entidades": set(), "relaciones": ""}
 
+
+@tool
+def buscar_en_grafo(pregunta: str) -> str:
+    """Busca en el GRAFO DE CONOCIMIENTO (GraphRAG) las entidades mencionadas
+    en la pregunta y devuelve sus relaciones estructuradas (entidad --relación--> entidad)."""
+    resaltados = _entidades_que_coinciden(pregunta)
+    relaciones = "\n".join(
+        f"{o} --{data['rel']}--> {d}"
+        for o, d, data in _G.edges(data=True)
+        if o in resaltados and d in resaltados
+    )
+    _ULTIMA_GRAFO["pregunta"] = pregunta
+    _ULTIMA_GRAFO["entidades"] = resaltados
+    _ULTIMA_GRAFO["relaciones"] = relaciones
+    if not relaciones:
+        return "No se encontraron entidades ni relaciones relevantes en el grafo."
+    return relaciones
+
+
+_AGENTE_GRAFO = create_agent(
+    get_chat_model(),
+    tools=[buscar_en_grafo],
+    system_prompt=(
+        "Eres una asistente experta. Antes de responder SIEMPRE usa la herramienta "
+        "'buscar_en_grafo' para recuperar las relaciones del grafo de conocimiento. "
+        "Responde usando SOLO esas relaciones; si no están en el contexto, di que no lo sabes."
+    ),
+)
+
+
+async def preguntar_al_agente(pregunta: str, modo: str = "RAG"):
+    if not pregunta or not pregunta.strip():
+        vacio = ver_vector_store("")[0] if modo == "RAG" else _construir_figura_grafo(set())
+        return vacio, "Escribe una pregunta para el agente."
+
+    if modo == "GraphRAG":
+        _ULTIMA_GRAFO["entidades"] = set(); _ULTIMA_GRAFO["relaciones"] = ""
+        resultado = await _AGENTE_GRAFO.ainvoke({"messages": [{"role": "user", "content": pregunta}]})
+        respuesta = resultado["messages"][-1].content
+        uso_tool = any(getattr(m, "tool_calls", None) for m in resultado["messages"])
+
+        fig = _construir_figura_grafo(_ULTIMA_GRAFO["entidades"])
+        rels = _ULTIMA_GRAFO["relaciones"]
+        md = f"### 🧠 Respuesta del agente (GraphRAG)\n\n{respuesta}\n\n---\n"
+        md += ("✅ El agente **llamó a `buscar_en_grafo`** (GraphRAG) antes de responder.\n"
+               if uso_tool else
+               "⚠️ El agente respondió **sin** usar la herramienta de grafo.\n")
+        if rels:
+            n_ent = len(_ULTIMA_GRAFO["entidades"])
+            md += f"\n### 🕸️ Relaciones recuperadas del grafo ({n_ent} entidades)\n```\n{rels}\n```\n"
+        return fig, md
+
+    # Modo RAG (por defecto)
     _ULTIMA_RECUPERACION["docs"] = []
     resultado = await _AGENTE.ainvoke({"messages": [{"role": "user", "content": pregunta}]})
     respuesta = resultado["messages"][-1].content
@@ -235,7 +299,7 @@ async def preguntar_al_agente(pregunta: str):
     fig, _ = ver_vector_store(pregunta)
 
     docs = _ULTIMA_RECUPERACION["docs"]
-    md = f"### 🧠 Respuesta del agente\n\n{respuesta}\n\n---\n"
+    md = f"### 🧠 Respuesta del agente (RAG)\n\n{respuesta}\n\n---\n"
     md += ("✅ El agente **llamó a `buscar_documentos`** (RAG) antes de responder.\n"
            if uso_tool else
            "⚠️ El agente respondió **sin** usar la herramienta de recuperación.\n")
@@ -254,15 +318,18 @@ def construir_app():
         gr.Markdown("# 🔎 Visor en vivo · Agente RAG, Vector Store y Grafo (GraphRAG)\n"
                     "Base de conocimiento: la historia ficticia de **Miravalle**.")
         with gr.Tab("Agente RAG en vivo"):
-            gr.Markdown("Pregúntale al **agente**. Verás su respuesta y, a la izquierda, "
-                        "los fragmentos que **FAISS recuperó** para esa pregunta (en rojo).")
+            gr.Markdown("Pregúntale al **agente** y elige el enfoque de recuperación:\n"
+                        "- **RAG:** recupera *fragmentos de texto* con FAISS (se resaltan en el espacio de embeddings).\n"
+                        "- **GraphRAG:** recupera *relaciones* del grafo de conocimiento (se resaltan en el grafo).\n\n"
+                        "_Cada modo es un agente independiente con una sola herramienta; no se mezclan._")
+            modo = gr.Radio(["RAG", "GraphRAG"], value="RAG", label="Enfoque de recuperación")
             qa = gr.Textbox(label="Pregunta al agente",
                             placeholder="p. ej. ¿Quién fundó Miravalle y en qué año?")
             with gr.Row():
-                plot_a = gr.Plot(label="Recuperación (embeddings)")
+                plot_a = gr.Plot(label="Recuperación")
                 info_a = gr.Markdown()
-            qa.submit(preguntar_al_agente, inputs=qa, outputs=[plot_a, info_a])
-            gr.Button("Preguntar").click(preguntar_al_agente, inputs=qa, outputs=[plot_a, info_a])
+            qa.submit(preguntar_al_agente, inputs=[qa, modo], outputs=[plot_a, info_a])
+            gr.Button("Preguntar").click(preguntar_al_agente, inputs=[qa, modo], outputs=[plot_a, info_a])
         with gr.Tab("Vector Store (RAG)"):
             q = gr.Textbox(label="Consulta", placeholder="p. ej. ¿Quién fundó Miravalle?")
             with gr.Row():

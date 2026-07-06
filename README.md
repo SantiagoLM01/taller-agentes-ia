@@ -135,10 +135,14 @@ python cli/visor.py
 
 Abre **http://127.0.0.1:7860** en el navegador. Tiene tres pestañas:
 
-- **Agente RAG en vivo:** le haces una pregunta a un **agente** real (LLM + tool).
-  Para responder, el agente llama a la herramienta `buscar_documentos`, que usa el
-  mismo retriever **FAISS** que expone el servidor MCP. Ves su respuesta y, a la
-  izquierda, los fragmentos que FAISS recuperó para esa pregunta (resaltados en rojo).
+- **Agente RAG en vivo:** le haces una pregunta a un **agente** real (LLM + tool) y
+  eliges el enfoque con un **toggle RAG / GraphRAG**:
+  - **RAG:** el agente llama a `buscar_documentos` (mismo retriever FAISS del servidor
+    MCP) y ves los *fragmentos de texto* recuperados resaltados en el espacio de embeddings.
+  - **GraphRAG:** el agente llama a `buscar_en_grafo` y ves las *relaciones* del grafo
+    de conocimiento que recuperó, resaltadas sobre el grafo.
+  Cada modo es un agente independiente con **una sola herramienta** (no se mezclan),
+  para mostrar lado a lado la diferencia entre recuperar texto y recuperar relaciones.
 - **Vector Store (RAG):** proyecta en 3D los *embeddings* (vectores numéricos) de los
   fragmentos de la historia. Escribes una consulta y ves qué fragmentos quedan más
   cerca (los que RAG recuperaría) resaltados junto al punto de tu consulta.
