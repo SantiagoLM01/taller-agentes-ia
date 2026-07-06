@@ -21,6 +21,21 @@ usan los servidores MCP y los scripts de `cli/`.
 
 ## ⚙️ Instalación
 
+### Opción rápida (recomendada) — un solo comando
+
+```powershell
+.\setup.ps1
+```
+
+Crea el entorno virtual, instala todas las dependencias, prepara el `.env` y
+verifica que todo quede listo. Si PowerShell bloquea la ejecución, corre antes:
+`Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
+
+Luego edita `.env` con tus credenciales de Azure OpenAI y vuelve a validar con
+`.\.venv\Scripts\python.exe setup_check.py`.
+
+### Opción manual (paso a paso)
+
 ```powershell
 # 1. Crear y activar un entorno virtual
 python -m venv .venv
