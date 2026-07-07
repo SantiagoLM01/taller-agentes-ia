@@ -86,6 +86,9 @@ taller-agentes-ia/
 │   └── rag_server.py     # Servidor MCP con la tool de RAG (buscar_documentos)
 ├── data/
 │   └── historia_zelanor.md   # Historia ficticia usada por RAG y GraphRAG
+├── presentacion/         # Presentación del taller
+│   ├── Taller_Agentes_IA_2h.pptx   # Diapositivas listas (22 slides, 2h)
+│   └── build_deck.py     # Genera el .pptx desde código (python-pptx)
 ├── config.py             # Crea el LLM y los embeddings de Azure OpenAI
 ├── taller_core.py        # Núcleo compartido: receta de RAG (FAISS) + grafo (GraphRAG)
 ├── setup_check.py        # Verificador del entorno
