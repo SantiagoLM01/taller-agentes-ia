@@ -15,7 +15,7 @@ usan los servidores MCP y los scripts de `cli/`.
 
 ## 📋 Requisitos previos (haz esto ANTES del taller)
 
-1. **Python 3.10 o superior** — comprueba con `python --version`.
+1. **Python 3.11 o 3.12** (versiones probadas; funciona desde 3.10) — comprueba con `python --version`. Al instalar, marca **"Add Python to PATH"**. Evita 3.13+ por ahora: alguna dependencia (p. ej. `faiss-cpu`) podría no tener versión precompilada.
 2. **VS Code** con las extensiones *Python* y *Jupyter* (se recomiendan solas al abrir el proyecto).
 3. Credenciales de **Azure OpenAI** (te las darán los organizadores).
 

@@ -14,13 +14,25 @@ Set-Location -Path $PSScriptRoot
 
 Write-Host "`n=== Instalacion del taller de Agentes de IA (Windows) ===`n" -ForegroundColor Cyan
 
-# 1. Verificar Python 3.10+
+# 1. Verificar Python 3.10-3.12 (versiones probadas)
 Write-Host "[1/5] Verificando Python..." -ForegroundColor Yellow
 try {
     $ver = (& python --version) 2>&1
 } catch {
-    Write-Host "  X No se encontro 'python'. Instala Python 3.10+ desde https://www.python.org/downloads/ y marca 'Add Python to PATH'." -ForegroundColor Red
+    Write-Host "  X No se encontro 'python'. Instala Python 3.11 o 3.12 desde https://www.python.org/downloads/ y marca 'Add Python to PATH'." -ForegroundColor Red
     exit 1
+}
+if ($ver -match "(\d+)\.(\d+)") {
+    $major = [int]$Matches[1]; $minor = [int]$Matches[2]
+    if ($major -ne 3 -or $minor -lt 10) {
+        Write-Host "  X Se encontro $ver. El taller requiere Python 3.10 o superior (recomendado: 3.11 o 3.12)." -ForegroundColor Red
+        Write-Host "    Instala Python 3.12 desde https://www.python.org/downloads/release/python-3120/ y marca 'Add Python to PATH'." -ForegroundColor Red
+        exit 1
+    }
+    if ($minor -ge 13) {
+        Write-Host "  ! $ver detectado. Las dependencias se probaron en 3.11/3.12; con 3.13+ alguna libreria (p.ej. faiss-cpu) podria no tener wheel." -ForegroundColor Yellow
+        Write-Host "    Si la instalacion falla, instala Python 3.12 y vuelve a correr .\setup.ps1" -ForegroundColor Yellow
+    }
 }
 Write-Host "  OK $ver"
 
