@@ -75,6 +75,12 @@ taller-agentes-ia/
 │   ├── 05_graphrag.py
 │   ├── preparar.py       # Genera por adelantado las cachés (FAISS + grafo)
 │   └── visor.py          # Visor interactivo (agente RAG + vector store + grafo en vivo)
+├── ejercicios/           # Ejercicios prácticos con stubs a completar (# EJERCICIO)
+│   ├── 01_agrega_tool.py
+│   ├── 02_servidor.py / 02_cliente.py
+│   ├── 03_agrega_nodo.py
+│   ├── 04_rag_experimento.py
+│   └── 05_graphrag_experimento.py
 ├── mcp_server/
 │   ├── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
 │   └── rag_server.py     # Servidor MCP con la tool de RAG (buscar_documentos)
@@ -83,9 +89,13 @@ taller-agentes-ia/
 ├── config.py             # Crea el LLM y los embeddings de Azure OpenAI
 ├── taller_core.py        # Núcleo compartido: receta de RAG (FAISS) + grafo (GraphRAG)
 ├── setup_check.py        # Verificador del entorno
+├── EJERCICIOS.md         # Guía de ejercicios (enunciados + pistas + soluciones)
 ├── requirements.txt
 └── .env.example
 ```
+
+Los ejercicios prácticos (agregar tools, nodos y experimentar con RAG/GraphRAG)
+están en **[EJERCICIOS.md](EJERCICIOS.md)**.
 
 ---
 
