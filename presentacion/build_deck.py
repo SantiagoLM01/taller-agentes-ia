@@ -438,6 +438,34 @@ concept_slide(5, "ORQUESTACIÓN", VIOLET_L, "¿Qué es LangGraph?",
      "Ideal para flujos complejos o de larga duración"],
     "🕸️", big="◯→◯", biglabel="nodos y transiciones")
 
+# ================= SLIDE 11c: EL GRAFO DE NUESTRO CODIGO =================
+s = slide(); bg(s, LIGHT)
+rect(s, 0, 0, SW, 1.35, INDIGO)
+rect(s, 0.6, 0.4, 0.14, 0.55, CYAN)
+text(s, 0.85, 0.3, 12, 0.8, [[R("El grafo de nuestro código", 32, WHITE, True, HFONT)]], space_after=0)
+text(s, 0.9, 0.93, 12, 0.4, [[R("El flujo real de cli/03_langgraph.py: clasifica la pregunta y la enruta", 14, RGBColor(0xB9,0xB3,0xE6))]], space_after=0)
+import os as _osimg
+_IMG = _osimg.path.join(_osimg.path.dirname(_osimg.path.abspath(__file__)), "langgraph_diagram.png")
+s.shapes.add_picture(_IMG, Inches(0.6), Inches(1.7), width=Inches(6.9))
+# Panel derecho: explicación
+rect(s, 8.15, 1.7, 4.5, 4.75, CARD, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+rect(s, 8.15, 1.7, 4.5, 0.18, CYAN)
+text(s, 8.45, 2.05, 3.9, 0.4, [[R("Cómo leerlo", 16, INK, True, HFONT)]], space_after=0)
+items = [
+    (VIOLET, "clasificar", "un LLM decide si la pregunta es técnica o general"),
+    (CORAL,  "aristas condicionales", "enrutan según esa categoría (tecnica / general)"),
+    (CYAN,   "responder_*", "cada rama responde con un estilo distinto"),
+    (GOLD,   "START / END", "entrada y salida del grafo"),
+]
+yy = 2.6
+for col, t, d in items:
+    rect(s, 8.45, yy+0.05, 0.16, 0.16, col, shape=MSO_SHAPE.OVAL)
+    text(s, 8.75, yy-0.05, 3.7, 0.4, [[R(t, 13.5, INK, True, HFONT)]], space_after=0)
+    text(s, 8.75, yy+0.3, 3.7, 0.6, [[R(d, 11.5, MUTED)]], line_spacing=1.02, space_after=0)
+    yy += 0.98
+text(s, 0.7, 6.75, 11.95, 0.4, [[R("Es exactamente el grafo que compilas en construir_grafo(): nodos = pasos, aristas = transiciones.", 11, MUTED, italic=True)]], align=PP_ALIGN.CENTER, space_after=0)
+footer(s); page_num(s)
+
 # ================= SLIDE 12: PRACTICA 3 =================
 practice_slide(3, "De Agent a Grafo", "0:54–1:10",
     ["Modelar el agente actual como un grafo",
