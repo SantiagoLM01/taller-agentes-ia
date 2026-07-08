@@ -176,6 +176,55 @@ for n in G.nodes():
 
 ---
 
+## Ejercicio 6 · Subagentes con LangChain (agente coordinador)
+
+**Archivo:** `ejercicios/06_subagentes.py`
+
+En vez de un solo agente que lo hace todo, un **coordinador** delega en
+**subagentes** especialistas. Cada subagente se expone al coordinador como si
+fuera una herramienta:
+
+```
+coordinador
+  ├── historiador  (busca en la historia de Miravalle · RAG)  ← ya resuelto
+  └── traductor    (traduce la respuesta al inglés)            ← tú lo creas
+```
+
+1. Completa el subagente `traductor`.
+2. Agrégalo a la lista `SUBAGENTES` para que el coordinador pueda delegarle.
+
+```powershell
+python ejercicios/06_subagentes.py "¿quién gobierna Miravalle? responde en inglés"
+```
+
+**Otros subagentes que puedes agregar:** `resumidor` (resume en 1 frase),
+`matematico` (resuelve cálculos), `revisor` (corrige ortografía), `tono_formal`
+(reescribe en tono formal).
+
+**✅ Checkpoint:** el coordinador llama a `historiador` para buscar el dato y
+luego a `traductor` para responder en inglés (delegación en cadena).
+
+<details><summary>💡 Solución</summary>
+
+```python
+@tool
+def traductor(texto: str) -> str:
+    """Traduce un texto al inglés. Recibe el texto y devuelve su traducción."""
+    sub = create_agent(
+        modelo,
+        tools=[],
+        system_prompt="Eres un traductor. Traduce al inglés el texto del usuario, sin explicar.",
+    )
+    r = sub.invoke({"messages": [{"role": "user", "content": texto}]})
+    return r["messages"][-1].content
+
+
+SUBAGENTES = [historiador, traductor]
+```
+</details>
+
+---
+
 ## Cierre · Compara RAG vs GraphRAG en el visor
 
 Abre el visor y usa el **toggle RAG / GraphRAG** con la misma pregunta:

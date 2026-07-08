@@ -80,7 +80,8 @@ taller-agentes-ia/
 │   ├── 02_servidor.py / 02_cliente.py
 │   ├── 03_agrega_nodo.py
 │   ├── 04_rag_experimento.py
-│   └── 05_graphrag_experimento.py
+│   ├── 05_graphrag_experimento.py
+│   └── 06_subagentes.py      # Coordinador que delega en subagentes (LangChain)
 ├── mcp_server/
 │   ├── server.py         # Servidor MCP de ejemplo (tools: calcular, clima)
 │   └── rag_server.py     # Servidor MCP con la tool de RAG (buscar_documentos)

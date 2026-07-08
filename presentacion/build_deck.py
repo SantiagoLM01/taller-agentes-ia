@@ -300,6 +300,46 @@ concept_slide(2, "FUNDAMENTO", CYAN, "¿Qué es un Agent?",
      "Va mucho más allá de un chatbot tradicional"],
     "🤖", big="🔁", biglabel="observar · decidir · actuar")
 
+# ================= SLIDE 5b: SYSTEM PROMPT =================
+s = slide(); bg(s, LIGHT)
+rect(s, 0, 0, SW, 1.35, INDIGO)
+rect(s, 0.6, 0.4, 0.14, 0.55, GOLD)
+text(s, 0.85, 0.3, 12, 0.8, [[R("¿Qué es un system prompt?", 32, WHITE, True, HFONT)]], space_after=0)
+text(s, 0.9, 0.93, 12, 0.4, [[R("La instrucción base que define cómo se comporta el agente", 14, RGBColor(0xB9,0xB3,0xE6))]], space_after=0)
+# --- Columna izquierda: definición + ejemplo ---
+text(s, 0.7, 1.6, 6.5, 1.0, [[R("Es el mensaje inicial (invisible para el usuario) que fija el rol, las reglas y el tono. Se envía antes que todo y se mantiene en cada turno de la conversación.", 14, INK)]], line_spacing=1.12, space_after=0)
+text(s, 0.7, 2.78, 6.5, 0.35, [[R("EJEMPLO — nuestro agente de Miravalle", 11.5, VIOLET, True, HFONT)]], space_after=0)
+rect(s, 0.7, 3.15, 6.5, 2.3, INDIGO, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+rect(s, 0.7, 3.15, 0.12, 2.3, GOLD)
+text(s, 1.0, 3.35, 5.95, 1.95,
+     [[R("\"Eres una guía experta del reino de Miravalle.", 12, WHITE, False, "Consolas")],
+      [R(" Responde en español, con tono claro y amable.", 12, WHITE, False, "Consolas")],
+      [R(" Usa la herramienta buscar_documentos para", 12, WHITE, False, "Consolas")],
+      [R(" responder con datos de la historia.", 12, WHITE, False, "Consolas")],
+      [R(" Si no encuentras algo, dilo; no inventes.\"", 12, WHITE, False, "Consolas")]],
+     line_spacing=1.15, space_after=0)
+# chips: qué define
+chips = [("Rol y tono", VIOLET), ("Reglas y formato", CORAL), ("Tools y contexto", CYAN)]
+cx = 0.7
+for label, col in chips:
+    rect(s, cx, 5.72, 2.05, 0.55, CARD, line=col, line_w=1.5, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+    text(s, cx, 5.72, 2.05, 0.55, [[R(label, 11, INK, True)]], align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, space_after=0)
+    cx += 2.17
+# --- Columna derecha: orden de los mensajes ---
+text(s, 7.65, 1.6, 5.0, 0.4, [[R("Cómo se apilan los mensajes", 14, MUTED, True, HFONT)]], space_after=0)
+rect(s, 7.65, 2.05, 5.0, 1.2, INDIGO, line=GOLD, line_w=2, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+text(s, 7.95, 2.2, 4.5, 0.4, [[R("① SYSTEM", 13, GOLD, True, HFONT)]], space_after=0)
+text(s, 7.95, 2.6, 4.5, 0.55, [[R("Rol + reglas + herramientas. Lo defines tú, una sola vez.", 12, WHITE)]], line_spacing=1.0, space_after=0)
+rect(s, 7.65, 3.45, 5.0, 1.0, CARD, line=CYAN, line_w=1.5, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+text(s, 7.95, 3.58, 4.5, 0.35, [[R("② USUARIO", 12.5, CYAN, True, HFONT)]], space_after=0)
+text(s, 7.95, 3.93, 4.5, 0.45, [[R("\"¿Quién gobierna Miravalle?\"", 12.5, INK)]], space_after=0)
+rect(s, 7.65, 4.65, 5.0, 1.0, CARD, line=CORAL, line_w=1.5, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+text(s, 7.95, 4.78, 4.5, 0.35, [[R("③ ASISTENTE", 12.5, CORAL, True, HFONT)]], space_after=0)
+text(s, 7.95, 5.13, 4.5, 0.45, [[R("Responde siguiendo las reglas del system.", 12, INK)]], space_after=0)
+text(s, 7.65, 5.8, 5.0, 0.4, [[R("El system se mantiene fijo en todos los turnos.", 11, MUTED, italic=True)]], space_after=0)
+text(s, 0.7, 6.55, 11.95, 0.4, [[R("El usuario final no ve el system prompt: es la \"configuración de personalidad y reglas\" del agente.", 11, MUTED, italic=True)]], align=PP_ALIGN.CENTER, space_after=0)
+footer(s); page_num(s)
+
 # ================= SLIDE 6: PRACTICA 1 =================
 practice_slide(1, "Agente base con LangChain", "0:13–0:20",
     ["Crear un agente simple con un prompt template",
@@ -338,6 +378,43 @@ for i,(emoji,t,d,col) in enumerate(boxes):
     if i < 2:
         text(s, x+bw+0.02, 3.35, gap, 0.6, [[R("→", 30, VIOLET_L, True)]], align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, space_after=0)
 footer(s); page_num(s)
+# ================= SLIDE 8b: FLUJO CLIENTE <-> SERVIDOR MCP =================
+s = slide(); bg(s, LIGHT)
+rect(s, 0, 0, SW, 1.35, INDIGO)
+rect(s, 0.6, 0.4, 0.14, 0.55, CORAL)
+text(s, 0.85, 0.3, 12, 0.8, [[R("Cliente MCP ⇄ Servidor MCP: cómo se hablan", 30, WHITE, True, HFONT)]], space_after=0)
+text(s, 0.9, 0.93, 12, 0.4, [[R("El diálogo paso a paso entre tu agente y las herramientas", 14, RGBColor(0xB9,0xB3,0xE6))]], space_after=0)
+# Panel Cliente (izq)
+rect(s, 0.7, 1.7, 2.55, 4.6, CARD, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+rect(s, 0.7, 1.7, 2.55, 0.18, VIOLET)
+circle_icon(s, 0.7+2.55/2-0.55, 2.05, 1.1, VIOLET, "💻", 34)
+text(s, 0.7, 3.25, 2.55, 0.5, [[R("Cliente MCP", 17, INK, True, HFONT)]], align=PP_ALIGN.CENTER, space_after=0)
+text(s, 0.8, 3.78, 2.35, 1.2, [[R("Tu agente / LLM. Decide qué herramienta usar y cuándo.", 12, MUTED)]], align=PP_ALIGN.CENTER, line_spacing=1.1, space_after=0)
+# Panel Servidor (der)
+rect(s, 10.08, 1.7, 2.55, 4.6, CARD, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+rect(s, 10.08, 1.7, 2.55, 0.18, CORAL)
+circle_icon(s, 10.08+2.55/2-0.55, 2.05, 1.1, CORAL, "🖥️", 34)
+text(s, 10.08, 3.25, 2.55, 0.5, [[R("Servidor MCP", 17, INK, True, HFONT)]], align=PP_ALIGN.CENTER, space_after=0)
+text(s, 10.18, 3.78, 2.35, 1.2, [[R("Expone y ejecuta las tools (archivos, APIs, RAG…).", 12, MUTED)]], align=PP_ALIGN.CENTER, line_spacing=1.1, space_after=0)
+# Intercambios (centro)
+mx = 3.45; mw = 6.5
+exchanges = [
+    (1, "→", VIOLET, "tools/list", "El cliente pregunta qué herramientas existen"),
+    (2, "←", CORAL,  "catálogo",   "El servidor devuelve nombre, descripción y esquema"),
+    (3, "→", VIOLET, "tools/call", "El cliente pide ejecutar una tool con sus argumentos"),
+    (4, "←", CORAL,  "resultado",  "El servidor ejecuta y devuelve el dato al agente"),
+]
+y = 1.95
+for num, arrow, col, method, desc in exchanges:
+    rect(s, mx, y, mw, 0.92, CARD, shape=MSO_SHAPE.ROUNDED_RECTANGLE)
+    rect(s, mx, y, 0.11, 0.92, col)
+    circle_icon(s, mx+0.28, y+0.21, 0.5, col, str(num), 17)
+    text(s, mx+1.0, y+0.13, mw-1.2, 0.4, [[R(arrow+"  "+method, 15, INK, True, HFONT)]], space_after=0)
+    text(s, mx+1.0, y+0.52, mw-1.2, 0.35, [[R(desc, 11.5, MUTED)]], line_spacing=1.0, space_after=0)
+    y += 1.03
+text(s, 0.7, 6.5, 11.95, 0.4, [[R("Todo viaja como mensajes JSON-RPC. Descubrir (tools/list) ocurre una vez; ejecutar (tools/call) cada vez que el agente decide usar una herramienta.", 11, MUTED, italic=True)]], align=PP_ALIGN.CENTER, space_after=0)
+footer(s); page_num(s)
+
 # ================= SLIDE 9: PRACTICA 2 =================
 practice_slide(2, "Agente + tools vía MCP", "0:27–0:45",
     ["Conectar 1–2 herramientas al agente por MCP",
@@ -557,3 +634,4 @@ if _os.environ.get("DECK_OUT"):
     out = _os.environ["DECK_OUT"]
 prs.save(out)
 print("Guardado:", out, "· slides:", len(prs.slides._sldIdLst))
+

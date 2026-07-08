@@ -20,9 +20,9 @@ $env:DECK_OUT = "C:\ruta\salida.pptx"; python build_deck.py
 ## Contenido (orden de las diapositivas)
 
 1. Título · 2. Agenda · 3. Reglas · 4. Setup
-5. LLM · 6. Agent · 7. Práctica 1 (LangChain)
-8. MCP · 9. Arquitectura MCP · 10. Práctica 2 (Tools con MCP)
-11. ¿Por qué LangGraph? · 12. ¿Qué es LangGraph? · 13. Práctica 3
-14. RAG · 15. Comparación con/sin RAG · 16. Similitud densa (coseno, producto punto, distancia euclidiana)
-17. Búsqueda léxica (TF-IDF y BM25) · 18. Práctica 4 (RAG)
-19. GraphRAG · 20. Práctica 5 · 21. Visor RAG vs GraphRAG · 22. Cierre
+5. LLM · 6. Agent · 7. System prompt · 8. Práctica 1 (LangChain)
+9. MCP · 10. Arquitectura MCP · 11. Flujo Cliente⇄Servidor MCP · 12. Práctica 2 (Tools con MCP)
+13. ¿Por qué LangGraph? · 14. ¿Qué es LangGraph? · 15. Práctica 3
+16. RAG · 17. Componentes de RAG · 18. Similitud densa (coseno, producto punto, distancia euclidiana)
+19. Búsqueda léxica (TF-IDF y BM25) · 20. Práctica 4 (RAG)
+21. GraphRAG · 22. Práctica 5 · 23. Visor RAG vs GraphRAG · 24. Cierre
